@@ -3,6 +3,33 @@
 > Nối tiếp Lab 8. Lab 8 trả lời "agent có chạy không"; Lab 9 trả lời **"làm sao biết bản mới tốt hơn — và chặn được bản tệ trước khi merge"**.
 > Không cần API key: MockLLM + judge replay. **Không Langfuse / OTel** (observability học ở Day 14).
 
+## Trạng thái repo nộp
+
+Repo này đã được overlay hoàn chỉnh trên code gốc Day 8 và sẵn sàng để nộp trên nhánh `main`:
+
+- `src/lab8/`: code gốc Day 8, không sửa.
+- `src/lab9/{stats,graders,evalset}.py`: đã hoàn thành các TODO Core.
+- `src/data/eval/eval_set_v1.jsonl` và `labels_v1.json`: eval item và nhãn tách riêng.
+- `src/reports/baseline_v1.json`, `eval_fixed.json`, `eval_seeded_regression.json`: report sinh bằng script.
+- `docs/failure_taxonomy.md`, `trace_case.md`, `judge_audit.md`, `eval_card.md`, `PRD_v1.1.md`.
+- `src/harness_map.yaml`: có section `eval`.
+
+Kiểm tra từ thư mục `src/`:
+
+```bash
+python -m lab9.smoke
+python -m lab9.evalset --check
+python -m pytest -q -m student -o addopts= -k lab9
+```
+
+Các report trong `src/reports/` bị `.gitignore` bỏ qua theo cấu hình Lab 8. Khi nộp fork, cần force-add các report bắt buộc:
+
+```bash
+git add -f reports/baseline_v1.json reports/eval_fixed.json reports/eval_seeded_regression.json
+```
+
+Phần hướng dẫn overlay bên dưới mô tả quy trình khi bắt đầu từ starter; không cần chạy lại trong repo này.
+
 ## Bạn sẽ làm gì (13:30–17:00 trên lớp, nộp muộn nhất 23:59 cùng ngày)
 | M | Giờ | Việc | Lệnh kiểm tra |
 |---|---|---|---|
@@ -16,9 +43,9 @@
 | M6 | sau 17:00 | **Advanced.** Nhiễu: A/A trên 2 bộ seed, `pass@k` / `pass^k`, ngưỡng `pass_hat_5` | `python -m lab9.mutation --aa 66,77,88,99,110 ...` |
 | M7 | sau 17:00 | **Expert.** Gate chống gian lận eval: `integrity_check` + ratchet; scorecard đột biến | `python -m lab9.traps` và `python -m lab9.mutation ...` |
 
-## Cài đặt (M0): chép overlay vào repo Lab 8
+## Cài đặt (M0) từ starter
 
-Starter này **không chạy độc lập**: nó chỉ có `src/lab9/`, docs và workflow. Code agent, dữ liệu và `requirements.txt` nằm trong repo Lab 8 của nhóm.
+Starter ban đầu **không chạy độc lập**: nó chỉ có `src/lab9/`, docs và workflow. Code agent, dữ liệu và `requirements.txt` nằm trong repo Lab 8 của nhóm. Repo nộp hiện tại đã có đủ các phần này.
 
 **Không cần hoàn thiện Lab 8.** M0–M4 (baseline, gate, `fixed`, `seeded_regression`) đều chạy trên shape `swarm`, tức `lab8/shapes/swarm_reference.py` do giảng viên cung cấp, không dùng `workflow`/`single`/`orchestrator` của nhóm. Repo Lab 8 còn TODO vẫn làm được Lab 9, miễn là package `src/lab8/` còn nguyên.
 
@@ -103,9 +130,9 @@ Lưu ý: một bug chỉ xuất hiện ở 1/3 seed (`rare`) **không** phát hi
 
 ## Bản đồ file
 ```
-src/lab9/evalset.py   eval set v1 + provenance + check        (TODO M1: failure_modes)
-src/lab9/graders.py   pydantic-evals Evaluators               (TODO M3: 2 grader)
-src/lab9/stats.py     confusion, P/R, kappa, RG, bootstrap    (TODO M2, M4)
+src/lab9/evalset.py   eval set v1 + provenance + check
+src/lab9/graders.py   pydantic-evals Evaluators
+src/lab9/stats.py     confusion, P/R, kappa, RG, bootstrap
 src/lab9/trace_case.py trace → bước sai đầu tiên cho 1 claim@seed (docs/trace_case.md)
 src/lab9/judge.py     calibrate judge từ CSV (replay)
 src/lab9/eval.py      chạy 1 shape → reports/eval_<shape>.json có run_id
@@ -113,7 +140,7 @@ src/lab9/gate.py      PR vs baseline theo metric_spec → exit 0/1
 src/lab9/variants.py  fixed / seeded_regression (+ honest_refactor, slice_, flaky_regression cho v2)
 src/lab9/mutation.py  scorecard: variant công khai qua gate của bạn; --aa = nhiễu A/A   (M5–M7)
 src/lab9/traps.py     sinh report đã bị làm đẹp để thử integrity_check                  (M7)
-src/config/metric_spec_v2.yaml, fm_map.yaml, data/eval/adversarial_v2.json             (TODO M5, M6)
+src/config/metric_spec_v2.yaml, fm_map.yaml, data/eval/adversarial_v2.json             (Advanced / Expert)
 src/config/metric_spec.yaml   ngưỡng (ratchet: cùng eval-set version chỉ được chặt hơn)
 ```
 Quy tắc: không sửa file `lab8/`; không sửa tay `reports/`; không đặt nhãn inline trong item.

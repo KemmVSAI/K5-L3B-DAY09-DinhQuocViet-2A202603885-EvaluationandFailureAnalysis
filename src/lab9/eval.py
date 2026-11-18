@@ -110,14 +110,17 @@ def run_eval(shape: str, spec: dict[str, Any], seeds: list[int] | None = None) -
                          "seeds": seeds, "metric_spec_version": spec["metric_spec_version"],
                          "llm": "MockLLM", "python": platform.python_version()},
             "rows": rows, "evaluator_failures": failures,
-            "metrics": aggregate(rows, metric_ids, k_values=spec.get("pass_k", []))}
+            "metrics": aggregate(rows, metric_ids, k_values=spec.get("pass_k", []),
+                                 safety_ids={m["id"] for m in spec["metrics"] if m.get("kind") == "safety"})}
 
 
-def aggregate(rows: list[dict[str, Any]], metric_ids: list[str], k_values: list[int] = ()) -> dict[str, Any]:
+def aggregate(rows: list[dict[str, Any]], metric_ids: list[str], k_values: list[int] = (),
+              safety_ids: set[str] | None = None) -> dict[str, Any]:
     out: dict[str, Any] = {}
+    safety_ids = safety_ids or {"secret_leak", "approval_bypass"}
     for m in metric_ids:
         vals = [r[m] for r in rows if r[m] is not None]
-        if m in ("secret_leak", "approval_bypass"):
+        if m in safety_ids:
             out[m] = sum(vals)                       # safety: a count, must be 0
         else:
             out[m] = round(sum(vals) / len(vals), 4) if vals else None

@@ -53,6 +53,28 @@ def test_integrity_flags_nan_and_dropped_rows():
     assert gate.integrity_check(dropped, base, SPEC)
 
 
+def test_integrity_flags_duplicate_rows_and_evaluator_failures():
+    from lab9 import gate
+
+    base = _report(copy.deepcopy(ROWS), {"pass_rate": 1.0})
+    duplicate = _report(copy.deepcopy(ROWS), {"pass_rate": 1.0})
+    duplicate["rows"][0] = copy.deepcopy(duplicate["rows"][1])
+    assert gate.integrity_check(duplicate, base, SPEC)
+
+    failed = _report(copy.deepcopy(ROWS), {"pass_rate": 1.0})
+    failed["evaluator_failures"] = ["E-001@1:Grader:boom"]
+    assert gate.integrity_check(failed, base, SPEC)
+
+
+def test_integrity_flags_removed_metric_key():
+    from lab9 import gate
+
+    base = _report(copy.deepcopy(ROWS), {"pass_rate": 1.0})
+    removed = _report(copy.deepcopy(ROWS), {"pass_rate": 1.0})
+    removed["rows"][0].pop("pass_rate")
+    assert gate.integrity_check(removed, base, SPEC)
+
+
 def test_integrity_flags_loosened_spec():
     from lab9 import gate
 
@@ -61,6 +83,9 @@ def test_integrity_flags_loosened_spec():
     loose["metrics"][0]["threshold"]["min"] = 0.5
     assert gate.integrity_check(base, base, loose, SPEC)
     assert gate.integrity_check(base, base, SPEC, SPEC) == []
+    removed = copy.deepcopy(SPEC)
+    removed["metrics"][0]["threshold"].pop("min")
+    assert gate.integrity_check(base, base, removed, SPEC)
 
 
 def test_slice_check_blocks_a_slice_below_floor():
